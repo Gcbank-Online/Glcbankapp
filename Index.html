@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GC Bank</title>
+  <style>
+    /* Basic CSS for layout and styling */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f6f8;
+      color: #333;
+    }
+    header {
+      background-color: #004d99;
+      color: white;
+      padding: 1rem 2rem;
+      text-align: center;
+    }
+    nav {
+      background-color: #0066cc;
+      padding: 0.5rem 2rem;
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+    }
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    main {
+      max-width: 900px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    section {
+      background: white;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #004d99;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.7rem 1.2rem;
+      background-color: #004d99;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #003366;
+    }
+    #accounts-list, #transaction-history {
+      margin-top: 1rem;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    #accounts-list th, #accounts-list td,
+    #transaction-history th, #transaction-history td {
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    #accounts-list th, #transaction-history th {
+      background-color: #e6f0ff;
+    }
+    .sr-only {
+      position: absolute;
+      left: -10000px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+    }
+    /* Authentication section styles */
+    #auth-section form {
+      max-width: 400px;
+      margin-bottom: 1rem;
+    }
+    #user-section {
+      text-align: right;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>GC Bank</h1>
+    <p>Your trusted financial partner</p>
+  </header>
+  <nav>
+    <a href="#accounts-section">Accounts</a>
+    <a href="#transactions-section">Transactions</a>
+    <a href="#transfer-section">Transfer Funds</a>
+  </nav>
+  <main>
+    <!-- Authentication Section -->
+    <section id="auth-section" aria-label="User Authentication">
+      <h2>Login</h2>
+      <form id="login-form">
+        <label for="login-username">Username:</label>
+        <input type="text" id="login-username" autocomplete="username" required />
+        <label for="login-password">Password:</label>
+        <input type="password" id="login-password" autocomplete="current-password" required />
+        <button type="submit">Login</button>
+      </form>
+      <p>Don't have an account? <button id="show-register-btn" type="button">Register here</button></p>
+
+      <section id="register-section" hidden>
+        <h2>Register</h2>
+        <form id="register-form">
+          <label for="register-username">Username:</label>
+          <input type="text" id="register-username" autocomplete="username" required />
+          <label for="register-password">Password:</label>
+          <input type="password" id="register-password" autocomplete="new-password" required />
+          <button type="submit">Register</button>
+        </form>
+        <button id="show-login-btn" type="button">Back to Login</button>
+      </section>
+    </section>
+
+    <!-- User info and logout -->
+    <section id="user-section" hidden>
+      <p>Welcome, <span id="username-display"></span>! <button id="logout-btn" type="button">Logout</button></p>
+    </section>
+
+    <!-- Accounts Section -->
+    <section id="accounts-section" aria-labelledby="accounts-heading" hidden>
+      <h2 id="accounts-heading">Your Accounts</h2>
+      <button id="load-accounts-btn">Load Accounts</button>
+      <table id="accounts-list" aria-live="polite" aria-relevant="all" hidden>
+        <thead>
+          <tr>
+            <th>Account Number</th>
+            <th>Account Type</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Transactions Section -->
+    <section id="transactions-section" aria-labelledby="transactions-heading" hidden>
+      <h2 id="transactions-heading">Transaction History</h2>
+      <label for="account-select">Select Account:</label>
+      <select id="account-select" aria-describedby="account-select-desc">
+        <option value="">-- Select Account --</option>
+      </select>
+      <p id="account-select-desc" class="sr-only">Choose an account to view transactions</p>
+      <button id="load-transactions-btn" disabled>Load Transactions</button>
+      <table id="transaction-history" aria-live="polite" aria-relevant="all" hidden>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Type</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+
+    <!-- Transfer Section -->
+    <section id="transfer-section" aria-labelledby="transfer-heading" hidden>
+      <h2 id="transfer-heading">Transfer Funds</h2>
+      <form id="transfer-form">
+        <label for="from-account">From Account:</label>
+        <select id="from-account" required>
+          <option value="">-- Select Account --</option>
+        </select>
+
+        <label for="to-account">To Account Number:</label>
+        <input type="text" id="to-account" name="toAccount" placeholder="Enter account number" required pattern="\d+" />
+
+        <label for="amount">Amount:</label>
+        <input type="number" id="amount" name="amount" min="0.01" step="0.01" required />
+
+        <button type="submit">Send Transfer</button>
+      </form>
+      <p id="transfer-message" role="alert" aria-live="assertive"></p>
+    </section>
+  </main>
+
+  <script>
+    // Elements
+    const authSection = document.getElementById('auth-section');
+    const registerSection = document.getElementById('register-section');
+    const userSection = document.getElementById('user-section');
+    const usernameDisplay = document.getElementById('username-display');
+
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const showRegisterBtn = document.getElementById('show-register-btn');
+    const showLoginBtn = document.getElementById('show-login-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    const accountsSection = document.getElementById('accounts-section');
+    const loadAccountsBtn = document.getElementById('load-accounts-btn');
+    const accountsList = document.getElementById('accounts-list');
+    const accountsTbody = accountsList.querySelector('tbody');
+    const accountSelect = document.getElementById('account-select');
+    const loadTransactionsBtn = document.getElementById('load-transactions-btn');
+    const transactionsTable = document.getElementById('transaction-history');
+    const transactionsTbody = transactionsTable.querySelector('tbody');
+    const fromAccountSelect = document.getElementById('from-account');
+    const transferForm = document.getElementById('transfer-form');
+    const transferMessage = document.getElementById('transfer-message');
+
+    let accounts = [];
+
+    // Show register form
+    showRegisterBtn.addEventListener('click', () => {
+      registerSection.hidden = false;
+      loginForm.hidden = true;
+      showRegisterBtn.hidden = true;
+    });
+
+    // Show login form
+    showLoginBtn.addEventListener('click', () => {
+      registerSection.hidden = true;
+      loginForm.hidden = false;
+      showRegisterBtn.hidden = false;
+    });
+
+    // Register user
+    registerForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('register-username').value.trim();
+      const password = document.getElementById('register-password').value.trim();
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Registration failed');
+
+        alert('Registration successful! Please login.');
+        registerSection.hidden = true;
+        loginForm.hidden = false;
+        showRegisterBtn.hidden = false;
+        registerForm.reset();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // Login user
+    loginForm.addEventListener('submit', async event => {
+      event.preventDefault();
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Login failed');
+
+        authSection.hidden = true;
+        userSection.hidden = false;
+        accountsSection.hidden = false;
+        document.getElementById('transactions-section').hidden = false;
+        document.getElementById('transfer-section').hidden = false;
+
+        usernameDisplay.textContent = username;
+        await loadAccounts();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // Logout user
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/logout', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Logout failed');
+
+        authSection.hidden = false;
+        userSection.hidden = true;
+        accountsSection.hidden = true;
+        document.getElementById('transactions-section').hidden = true;
+        document.getElementById('transfer-section').hidden = true;
+
+        accountsList.hidden = true;
+        transactionsTable.hidden = true;
+        fromAccountSelect.innerHTML = '<option value="">-- Select Account --</option>';
+        accountSelect.innerHTML = '<option value="">-- Select Account --</option>';
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    // Load accounts from backend
+    async function loadAccounts() {
+      try {
+        const response = await fetch('/api/accounts');
+        if (!response.ok) throw new Error('Failed to fetch accounts');
+        accounts = await response.json();
+
+        // Populate accounts table
+        accountsTbody.innerHTML = '';
+        accounts.forEach(acc => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${acc.accountNumber}</td>
+            <td>${acc.type}</td>
+            <td>{acc.balance.toFixed(2)}</td>
+          `;
+          accountsTbody.appendChild(row);
+        });
+        accountsList.hidden = false;
+
+        // Populate account selects
+        accountSelect.innerHTML = '<option value="">-- Select Account --</option>';
+        fromAccountSelect.innerHTML = '<option value="">-- Select Account --</option>';
+        accounts.forEach(acc => {
+          const option1 = document.createElement('option');
+          option1.value = acc.accountNumber;
+          option1.textContent = `${acc.accountNumber} (${acc.type})`;
+          accountSelect.appendChild(option1);
+
+          const option2 = option1.cloneNode(true);
+          fromAccountSelect.appendChild(option2);
+        });
+
+        loadTransactionsBtn.disabled = true;
+        transactionsTable.hidden = true;
+        transferMessage.textContent = '';
+      } catch (error) {
+        alert('Error loading accounts: ' + error.message);
+      }
+    }
+
+    loadAccountsBtn.addEventListener('click', loadAccounts);
+
+    // Enable load transactions button when account selected
+    accountSelect.addEventListener('change', () => {
+      loadTransactionsBtn.disabled = !accountSelect.value;
+      transactionsTable.hidden = true;
+    });
+
+    // Load transactions for selected account
+    async function loadTransactions() {
+      try {
+        const accountNumber = accountSelect.value;
+        if (!accountNumber) return;
+
+        const response = await fetch(`/api/accounts/${accountNumber}/transactions`);
+        if (!response.ok) throw new Error('Failed to fetch transactions');
+        const transactions = await response.json();
+
+        transactionsTbody.innerHTML = '';
+        transactions.forEach(tran => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${new Date(tran.date).toLocaleDateString()}</td>
+            <td>${tran.description}</td>
+            <td>${tran.type === 'debit' ? '-' : '+'}{tran.amount.toFixed(2)}</td>
+            <td>${tran.type.charAt(0).toUpperCase() + tran.type.slice(1)}</td>
+          `;
+          transactionsTbody.appendChild(row);
+        });
+        transactionsTable.hidden = false;
+      } catch (error) {
+        alert('Error loading transactions: ' + error.message);
+      }
+    }
+
+    loadTransactionsBtn.addEventListener('click', loadTransactions);
+
+    // Handle transfer form submission
+    transferForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      transferMessage.textContent = '';
+      const fromAccount = fromAccountSelect.value;
+      const toAccount = document.getElementById('to-account').value.trim();
+      const amount = parseFloat(document.getElementById('amount').value);
+
+      if (!fromAccount || !toAccount || isNaN(amount) || amount <= 0) {
+        transferMessage.textContent = 'Please fill out the form correctly.';
+        transferMessage.style.color = 'red';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/transfer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fromAccount, toAccount, amount })
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || 'Transfer failed');
+        }
+
+        transferMessage.textContent = 'Transfer successful!';
+        transferMessage.style.color = 'green';
+        await loadAccounts(); // Refresh account balances
+        transferForm.reset();
+      } catch (error) {
+        transferMessage.textContent = `Error: ${error.message}`;
+        transferMessage.style.color = 'red';
+      }
+    });
+  </script>
+</body>
+</html>
